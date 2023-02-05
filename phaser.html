@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
+<script
+src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.js"></script>
+<style type="text/css"> body { margin: 0; }</style>
+</head>
+<body>
+<script type="text/javascript">
+    var config = {
+        type: Phaser.AUTO,
+        width: 1600, height: 900,
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 1000 },
+                debug: true
+        }},
+        scene: {preload: preload, create: create, update: update }
+    };
+    
+    new Phaser.Game(config);
+    walljump=false
+    function preload(){
+        this.load.image("background", "background.png");
+        this.load.image("Phaser_assets", "jeux_tuiles.png");
+        this.load.tilemapTiledJSON("carte", "map_fini.json");
+        this.load.spritesheet('perso','personnage.png',
+        { frameWidth: 32, frameHeight: 32   });
+    }
+
+
+    var gameOver= false;
+
+
+    function create (){
+        this.add.image(800,800  ,"background");
+        const carteDuNiveau = this.add.tilemap("carte");
+        const tileset = carteDuNiveau.addTilesetImage(
+          "jeux_tuiles",
+          "Phaser_assets"
+        );  
+        const liquide = carteDuNiveau.createLayer(
+          "liquide",
+          tileset
+        );
+        const plateformes = carteDuNiveau.createLayer(
+          "plateforme",
+          tileset
+        );
+        const piques = carteDuNiveau.createLayer(
+          "piques",
+          tileset
+        );
+
+        plateformes.setCollisionByProperty({ estSolide: true }); 
+        this.player = this.physics.add.sprite(50,100, 'perso');
+        this.player.setCollideWorldBounds(true);   
+        this.physics.add.collider(this.player, plateformes);
+        this.physics.world.setBounds(0, 0, 1600, 1600); 
+        this.cameras.main.setBounds(0, 0, 1600, 1600);
+        this.cameras.main.zoom = 2.5;
+        this.cameras.main.startFollow(this.player);
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.clavier = this.input.keyboard.addKeys('A,D,SPACE');
+        scoreText=this.add.text(16,16,'score: 0',{fontSize:'32px',fill:'#000'});
+
+
+
+       
+    }
+    
+
+
+    function update(){
+        if (gameOver){return;}
+        
+        if (this.cursors.left.isDown && walljump==false){ //si la touche gauche est appuyée
+            this.player.setVelocityX(-160); //alors vitesse négative en X
+            this.player.anims.play('left', true); //et animation =>         
+        }
+        else if (this.cursors.right.isDown && walljump==false){ //sinon si la touche droite est appuyée
+            this.player.setVelocityX(160); //alors vitesse positive en X
+
+        }
+        else if(walljump==false){ // sinon
+            this.player.setVelocityX(0); //vitesse nulle
+
+        }
+        // Comportement - Joueur
+// Je gère la touche de saut de mon joueur
+        if(this.cursors.up.isDown && this.player.body.onFloor() || this.clavier.SPACE.isDown && this.player.body.onFloor()){
+                //si touche haut appuyée ET que le perso touche le sol
+                this.player.setVelocityY(-450); 
+            }
+            if(this.cursors.up.isDown && this.player.body.onWall() || this.clavier.SPACE.isDown && this.player.body.onWall()){
+                //si touche haut appuyée ET que le perso touche le sol
+                walljump=true
+                setTimeout(() => {
+                    walljump=false
+                }, 300);
+                this.player.setVelocityY(-450); 
+                if (this.player.body.blocked.left){
+                    this.player.setVelocityX(150)
+                }
+            }
+                
+    }
+    
+
+
+
+    
+</script>
+</body>
+</html>
